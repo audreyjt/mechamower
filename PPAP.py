@@ -1,65 +1,63 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.animation import FuncAnimation
 
-def rot3_z(theta):
-    """3D rotation around z-axis"""
-    return np.array([
-        [np.cos(theta), -np.sin(theta), 0],
-        [np.sin(theta),  np.cos(theta), 0],
-        [0, 0, 1]
-    ])
 
-def rot3_x(theta):
-    """3D rotation around z-axis"""
-    return np.array([
-        [1, 0, 0],
-        [0,  np.cos(theta), -np.sin(theta)],
-        [0, np.sin(theta), np.cos(theta)]
-    ])
+lawn_width = 10
+lawn_height = 5
+robot_width = 1.2
+overlap = 0.2
+speed = 0.5
+blade_diam = 1.0
 
-# Define cube vertices (8 corners)
-cube = np.array([
-    [0, 1, 1, 0, 0, 1, 1, 0],  # x
-    [0, 0, 1, 1, 0, 0, 1, 1],  # y
-    [0, 0, 0, 0, 1, 1, 1, 1]   # z
-])
+effective_sweep = blade_diam - overlap
+num_passes = int(np.ceil(lawn_height / effective_sweep))
 
-# Define cube edges (pairs of vertex indices)
-edges = [
-    (0,1), (1,2), (2,3), (3,0),  # bottom square
-    (4,5), (5,6), (6,7), (7,4),  # top square
-    (0,4), (1,5), (2,6), (3,7)   # vertical edges
-]
-# Compute cube center
-center = np.mean(cube, axis=1, keepdims=True)
+pos = np.array([0.0, 0.0])
+dir_vec = np.array([1.0, 0.0])
+direction = 1  # 1 = right, -1 = left
+current_pass = 0
 
-# Translate cube to origin
-cube_centered = cube - center
+path_x, path_y = [pos[0]], [pos[1]]
 
-# Rotate cube around Z axis
-theta = np.deg2rad(45)
-R = rot3_x(theta)
-rotated_cube = R @ cube_centered + center
+fig, ax = plt.subplots()
+ax.set_xlim(0, lawn_width)
+ax.set_ylim(0, lawn_height)
+ax.set_aspect('equal')
+ax.set_title("Lawnmower Robot Simulation")
 
-# Plot original and rotated cubes
-fig = plt.figure(figsize=(7,7))
-ax = fig.add_subplot(111, projection='3d')
+robot_dot, = ax.plot([], [], 'ro', markersize=5, label="Robot", zorder=3)
+robot_blade, = ax.plot([], [], 'ro', markersize=blade_diam * 36, alpha=0.3, label="Robot", zorder=2)
+path_line, = ax.plot([], [], 'b-', linewidth= robot_width * 36 , alpha=0.3, label="Path", zorder = 1)
 
-# Original cube (blue)
-for e in edges:
-    ax.plot([cube[0,e[0]], cube[0,e[1]]],
-            [cube[1,e[0]], cube[1,e[1]]],
-            [cube[2,e[0]], cube[2,e[1]]], 'b-')
 
-# Rotated cube (red)
-for e in edges:
-    ax.plot([rotated_cube[0,e[0]], rotated_cube[0,e[1]]],
-            [rotated_cube[1,e[0]], rotated_cube[1,e[1]]],
-            [rotated_cube[2,e[0]], rotated_cube[2,e[1]]], 'r-')
 
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-ax.set_box_aspect([1,1,1])  # Equal aspect ratio
+def update(_):
+    global pos, dir_vec, direction, current_pass
+
+    if current_pass >= num_passes:
+        return robot_dot, path_line, robot_blade
+
+    pos += dir_vec * speed
+
+    if (direction == 1 and pos[0] >= lawn_width) or (direction == -1 and pos[0] <= 0):
+        current_pass += 1
+        if current_pass < num_passes:
+            pos[1] = min(lawn_height, current_pass * effective_sweep)
+            direction *= -1
+            dir_vec = np.array([direction, 0.0])
+        else:
+            pos[0] = np.clip(pos[0], 0, lawn_width)
+            dir_vec[:] = 0.0
+
+    path_x.append(pos[0])
+    path_y.append(pos[1])
+
+    robot_dot.set_data([pos[0]], [pos[1]])
+    robot_blade.set_data([pos[0]], [pos[1]])
+    path_line.set_data(path_x, path_y)
+    return robot_dot, path_line, robot_blade
+
+ani = FuncAnimation(fig, update, frames=2000, interval=30, blit=True, repeat=False)
+
 plt.show()
