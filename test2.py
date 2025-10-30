@@ -3,7 +3,10 @@ import numpy as np
 from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull
 
-poly_points = np.random.rand(6, 2) * 10
+size_min = 1
+size_limit= 9
+np.random.seed(12)
+poly_points = np.clip((np.random.rand(8, 2) * 11), 0, size_limit)
 
 fig, ax = plt.subplots()
 hull = ConvexHull(poly_points)
