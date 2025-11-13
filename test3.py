@@ -4,27 +4,32 @@ from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull
 
 def plot_spokes(spokes_left_obj=None, spokes_right_obj=None, wheel_rad=3, x_0=0, y_0=0, n_spokes=7, offset_theta_l=0, offset_theta_r=0):
-    left_spokes = []
-    right_spokes = []
-    for i in range(n_spokes):
-        if spokes_left_obj:
-            spokes_x = x_0 + wheel_rad * np.cos(np.linspace(0 + offset_theta_l, 2 * np.pi + offset_theta_l, n_spokes))
-            spokes_y = y_0 + wheel_rad * np.sin(np.linspace(0 + offset_theta_l, 2 * np.pi + offset_theta_l, n_spokes))
-            spokes_left_obj[i].set_data([spokes_x[i]*.2,spokes_x[i]] , [spokes_y[i]*.2, spokes_y[i]])
-        if spokes_right_obj:
-            spokes_x = x_0 + wheel_rad * np.cos(np.linspace(0 + offset_theta_r, 2 * np.pi + offset_theta_r, n_spokes))
-            spokes_y = y_0 + wheel_rad * np.sin(np.linspace(0 + offset_theta_r, 2 * np.pi + offset_theta_r, n_spokes))
-            spokes_right_obj[i].set_data([spokes_x[i]*.2,spokes_x[i]] , [spokes_y[i]*.2, spokes_y[i]])
 
-        if spokes_left_obj is None and spokes_right_obj is None:
-            spokes_x = x_0 + wheel_rad * np.cos(np.linspace(0, 2 * np.pi, n_spokes))
-            spokes_y = y_0 + wheel_rad * np.sin(np.linspace(0, 2 * np.pi, n_spokes))
+    spokes_x =lambda offset: x_0 + wheel_rad * np.cos(np.linspace(0 + offset, 2 * np.pi + offset, n_spokes))
+    spokes_y =lambda offset: y_0 + wheel_rad * np.sin(np.linspace(0 + offset, 2 * np.pi + offset, n_spokes))
+    if spokes_left_obj:
+        cur_spokes_x = spokes_x(offset_theta_l)
+        cur_spokes_y = spokes_y(offset_theta_l)
+        for i in range(n_spokes):
+            spokes_left_obj[i].set_data([cur_spokes_x[i] * .2, cur_spokes_x[i]], [cur_spokes_y[i] * .2, cur_spokes_y[i]])
+
+    if spokes_right_obj:
+        cur_spokes_x = spokes_x(offset_theta_r)
+        cur_spokes_y = spokes_y(offset_theta_r)
+        for i in range(n_spokes):
+            spokes_right_obj[i].set_data([cur_spokes_x[i]*.2,cur_spokes_x[i]] , [cur_spokes_y[i]*.2, cur_spokes_y[i]])
+
+    if spokes_left_obj is None and spokes_right_obj is None:
+        spokes_x = x_0 + wheel_rad * np.cos(np.linspace(0, 2 * np.pi, n_spokes))
+        spokes_y = y_0 + wheel_rad * np.sin(np.linspace(0, 2 * np.pi, n_spokes))
+        left_spokes = []
+        right_spokes = []
+        for i in range(n_spokes):
             (left_spoke,) = ax[1].plot([spokes_x[i]*.2, spokes_x[i]], [spokes_y[i]*.2,spokes_y[i]] ,color="k", lw=4.0)
             (right_spoke,) = ax[2].plot([spokes_x[i] * .2, spokes_x[i]], [spokes_y[i] * .2, spokes_y[i]], color="k", lw=4.0)
             left_spokes.append(left_spoke)
             right_spokes.append(right_spoke)
-
-    return left_spokes, right_spokes
+        return left_spokes, right_spokes
 
 
 def plot_wheels(wheel_radius):
